@@ -1,7 +1,6 @@
 import pytest
 from model import Question
 
-
 def test_create_question():
     question = Question(title='q1')
     assert question.id != None
@@ -108,3 +107,42 @@ def test_correct_selected_choices_exceeds_max_selections_raises():
     c2 = q.add_choice('b', is_correct=True)
     with pytest.raises(Exception):
         q.correct_selected_choices([c1.id, c2.id])
+
+# ----------------- FIXTURES -----------------
+
+@pytest.fixture
+def sample_question():
+    """Retorna uma questão com 3 escolhas, 2 corretas."""
+    q = Question(title="Sample question", max_selections=3)  
+    c1 = q.add_choice("Choice A", is_correct=True)
+    c2 = q.add_choice("Choice B", is_correct=False)
+    c3 = q.add_choice("Choice C", is_correct=True)
+    return q
+
+@pytest.fixture
+def empty_question():
+    """Retorna uma questão sem escolhas."""
+    return Question(title="Empty question")
+
+# ----------------- TESTS USANDO FIXTURES -----------------
+
+def test_correct_choices_with_fixture(sample_question):
+    """Verifica se apenas as escolhas corretas são retornadas."""
+    correct_ids = sample_question.correct_selected_choices(
+        [c.id for c in sample_question.choices]
+    )
+    # Deve retornar apenas os IDs das escolhas corretas (Choice A e C)
+    expected_ids = [c.id for c in sample_question.choices if c.is_correct]
+    assert correct_ids == expected_ids
+
+def test_add_and_remove_choices_with_fixture(empty_question):
+    """Testa adicionar e remover escolhas usando fixture."""
+    # Adiciona escolhas
+    c1 = empty_question.add_choice("A")
+    c2 = empty_question.add_choice("B")
+    assert len(empty_question.choices) == 2
+
+    # Remove a primeira escolha
+    empty_question.remove_choice_by_id(c1.id)
+    assert len(empty_question.choices) == 1
+    assert empty_question.choices[0].id == c2.id
